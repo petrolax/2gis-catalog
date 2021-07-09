@@ -1,0 +1,47 @@
+insert into handbook.building (adress, coordinates) values (),
+                                                           (),
+                                                           (),
+                                                           ()
+
+insert into handbook.rubric (parent_id, name) values (),
+                                                     (),
+                                                     (),
+                                                     (),
+                                                     (),
+                                                     (),
+                                                     (),
+                                                     ()
+
+insert into handbook.company (name, phones, building_id) values (),
+                                                                (),
+                                                                (),
+                                                                (),
+                                                                (),
+                                                                (),
+                                                                (),
+                                                                (),
+                                                                (),
+                                                                (),
+                                                                (),
+                                                                (),
+                                                                ()
+
+insert into handbook.rubricsofcompany values (),
+                                             (),
+                                             (),
+                                             (),
+                                             (),
+                                             (),
+                                             (),
+                                             (),
+                                             (),
+                                             (),
+                                             (),
+                                             (),
+                                             (),
+                                             (),
+                                             (),
+                                             (),
+                                             (),
+                                             ()
+
