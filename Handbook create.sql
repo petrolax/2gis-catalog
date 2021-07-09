@@ -8,7 +8,7 @@ create table handbook.building (
 
 create table handbook.rubric (
 	rubric_id serial primary key,
-	parent_id integer references rubric_id,
+	parent_id integer references handbook.rubric(rubric_id),
 	name text NOT NULL
 );
 
