@@ -105,6 +105,10 @@ func (h Handler) GetCompaniesFromRubric(w http.ResponseWriter, r *http.Request) 
 				jsonidx++
 				break
 			}
+			if comps[j].Name == jsoncomps[jsonidx].Name && comps[j].Address != jsoncomps[jsonidx].Address{
+				jsonidx++
+				break
+			}
 			jsoncomps[jsonidx].Rubrics = append(jsoncomps[jsonidx].Rubrics, comps[j].Rubric)
 			i++
 		}
