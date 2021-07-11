@@ -22,28 +22,48 @@ func NewHandler(storage Storage) *Handler {
 func (h Handler) AddBuilding(w http.ResponseWriter, r *http.Request) {
 	var build Building
 	if err := json.NewDecoder(r.Body).Decode(&build); err != nil {
-		render.JSON(w, r, err.Error())
+		render.JSON(w, r, map[string]interface{} {
+			"HttpStatus":http.StatusBadRequest,
+			"Message": err.Error(),
+			"Data": nil,
+		})
 		return
 	}
-	// fmt.Println(build.Companies)
-	err := h.storage.InsertBuilding(&build)
-	if err != nil {
-		render.JSON(w, r, err.Error())
+	
+	if err := h.storage.InsertBuilding(&build); err != nil {
+		render.JSON(w, r, map[string]interface{} {
+			"HttpStatus":http.StatusBadRequest,
+			"Message": err.Error(),
+			"Data": nil,
+		})
+		return
 	}
-	render.Status(r, http.StatusOK)
+	
+	render.JSON(w, r, map[string]interface{} {
+		"HttpStatus":http.StatusOK,
+		"Message": "Success",
+		"Data": nil,
+	})
 }
 
 func (h Handler) GetCompaniesFromBuilding(w http.ResponseWriter, r *http.Request) {
 	strID := chi.URLParam(r, "id")
-	// fmt.Println(strID)
 	id, err := strconv.ParseInt(strID, 10, 64)
 	if err != nil {
-		render.JSON(w, r, err.Error())
+		render.JSON(w, r, map[string]interface{} {
+			"HttpStatus":http.StatusBadRequest,
+			"Message": err.Error(),
+			"Data": nil,
+		})
 		return
 	}
 	comps, err := h.storage.GetCompaniesFromBuilding(id)
 	if err != nil {
-		render.JSON(w, r, err.Error())
+		render.JSON(w, r, map[string]interface{} {
+			"HttpStatus":http.StatusBadRequest,
+			"Message": err.Error(),
+			"Data": nil,
+		})
 		return
 	}
 
@@ -70,7 +90,11 @@ func (h Handler) GetCompaniesFromBuilding(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	render.JSON(w, r, jsoncomps)
+	render.JSON(w, r, map[string]interface{} {
+		"HttpStatus":http.StatusOK,
+		"Message": "Success",
+		"Data": jsoncomps,
+	})
 }
 
 func (h Handler) GetCompaniesFromRubric(w http.ResponseWriter, r *http.Request) {
@@ -78,12 +102,20 @@ func (h Handler) GetCompaniesFromRubric(w http.ResponseWriter, r *http.Request) 
 	// fmt.Println(strID)
 	id, err := strconv.ParseInt(strID, 10, 64)
 	if err != nil {
-		render.JSON(w, r, err.Error())
+		render.JSON(w, r, map[string]interface{} {
+			"HttpStatus":http.StatusBadRequest,
+			"Message": err.Error(),
+			"Data": nil,
+		})
 		return
 	}
 	comps, err := h.storage.GetCompaniesFromRubric(id)
 	if err != nil {
-		render.JSON(w, r, err.Error())
+		render.JSON(w, r, map[string]interface{} {
+			"HttpStatus":http.StatusBadRequest,
+			"Message": err.Error(),
+			"Data": nil,
+		})
 		return
 	}
 
@@ -114,7 +146,11 @@ func (h Handler) GetCompaniesFromRubric(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	render.JSON(w, r, jsoncomps)
+	render.JSON(w, r, map[string]interface{} {
+		"HttpStatus":http.StatusOK,
+		"Message": "Success",
+		"Data": jsoncomps,
+	})
 }
 
 func (h Handler) GetCompany(w http.ResponseWriter, r *http.Request) {
@@ -122,12 +158,20 @@ func (h Handler) GetCompany(w http.ResponseWriter, r *http.Request) {
 	// fmt.Println(strID)
 	id, err := strconv.ParseInt(strID, 10, 64)
 	if err != nil {
-		render.JSON(w, r, err.Error())
+		render.JSON(w, r, map[string]interface{} {
+			"HttpStatus":http.StatusBadRequest,
+			"Message": err.Error(),
+			"Data": nil,
+		})
 		return
 	}
 	comps, err := h.storage.GetCompany(id)
 	if err != nil {
-		render.JSON(w, r, err.Error())
+		render.JSON(w, r, map[string]interface{} {
+			"HttpStatus":http.StatusBadRequest,
+			"Message": err.Error(),
+			"Data": nil,
+		})
 		return
 	}
 
@@ -141,5 +185,9 @@ func (h Handler) GetCompany(w http.ResponseWriter, r *http.Request) {
 		jsoncomp.Rubrics = append(jsoncomp.Rubrics, comp.Rubric)
 	}
 
-	render.JSON(w, r, jsoncomp)
+	render.JSON(w, r, map[string]interface{} {
+		"HttpStatus":http.StatusOK,
+		"Message": "Success",
+		"Data": jsoncomp,
+	})
 }
