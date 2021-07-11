@@ -17,9 +17,26 @@ type Company struct {
 // Данный тип создан для того чтобы сортировать массив организаций
 type Companies []Company
 
-func (c Companies) Len() int           { return len(c) }
-func (c Companies) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
-func (c Companies) Less(i, j int) bool { return c[i].Name < c[j].Name }
+func (c Companies) Len() int { 
+	return len(c)
+}
+
+func (c Companies) Swap(i, j int) {
+	c[i], c[j] = c[j], c[i] 
+}
+
+// Реализация функции не совпадает с её наименованием, но данное наименование необходимо для функции sort.Sort()
+func (c Companies) Less(i, j int) bool {
+	if c[i].Name != c[j].Name {
+		return c[i].Name < c[j].Name 
+	} else {
+		if c[i].Address != c[j].Address {
+			return c[i].Address < c[j].Address
+		} else {
+			return false
+		}
+	}
+}
 
 type JSONCompany struct {
 	Name    string  `json:"name" db:"name"`
@@ -53,6 +70,9 @@ func NewBuildingStorage(db *sqlx.DB) *BuildingStorage {
 }
 
 func (bs *BuildingStorage) InsertBuilding(b *Building) error {
+	bs.Lock()
+	defer bs.Unlock()
+	
 	requestAddBuilding := `INSERT INTO handbook.building (address, coordinates) VALUES ($1, $2)`
 	requestAddCompany := `INSERT INTO handbook.company (name, phones, building_id) VALUES ($1, $2, $3)`
 	requestAddRubricOfCompany := `INSERT INTO handbook.rubricsofcompany (company_id, rubric_id) VALUES ($1, $2)`
@@ -79,13 +99,16 @@ func (bs *BuildingStorage) InsertBuilding(b *Building) error {
 }
 
 func (bs BuildingStorage) GetCompany(companyId int64) ([]Company, error) {
+	bs.Lock()
+	defer bs.Unlock()
+
 	var comps []Company
 	request := `SELECT hc.name, hc.phones, 
-		hb.address as address, 
-		hr.rubric_id as rubric
-	FROM handbook.company as hc
-	INNER JOIN handbook.rubricsofcompany as hr ON hr.company_id = hc.company_id
-	INNER JOIN handbook.building as hb ON hb.building_id=hc.building_id
+		hb.address AS address, 
+		hr.rubric_id AS rubric
+	FROM handbook.company AS hc
+	INNER JOIN handbook.rubricsofcompany AS hr ON hr.company_id = hc.company_id
+	INNER JOIN handbook.building AS hb ON hb.building_id=hc.building_id
 	WHERE hc.company_id= $1`
 	err := bs.db.Select(&comps, request, companyId)
 	if err != nil {
@@ -95,13 +118,16 @@ func (bs BuildingStorage) GetCompany(companyId int64) ([]Company, error) {
 }
 
 func (bs BuildingStorage) GetCompaniesFromBuilding(buildingId int64) ([]Company, error) {
+	bs.Lock()
+	defer bs.Unlock()
+
 	var comps []Company
 	request := `SELECT hc.name, hc.phones, 
-		hb.address as address, 
-		hr.rubric_id as rubric
-	FROM handbook.company as hc
-	INNER JOIN handbook.rubricsofcompany as hr ON hr.company_id = hc.company_id
-	INNER JOIN handbook.building as hb ON hb.building_id=hc.building_id
+		hb.address AS address, 
+		hr.rubric_id AS rubric
+	FROM handbook.company AS hc
+	INNER JOIN handbook.rubricsofcompany AS hr ON hr.company_id = hc.company_id
+	INNER JOIN handbook.building AS hb ON hb.building_id=hc.building_id
 	WHERE hc.building_id= $1`
 	err := bs.db.Select(&comps, request, buildingId)
 	if err != nil {
@@ -111,30 +137,68 @@ func (bs BuildingStorage) GetCompaniesFromBuilding(buildingId int64) ([]Company,
 }
 
 func (bs BuildingStorage) GetCompaniesFromRubric(rubricId int64) ([]Company, error) {
+	bs.Lock()
+	defer bs.Unlock()
+
 	var comps []Company
 	request := `SELECT hc.name, hc.phones, 
-		hb.address as address, 
-		hroc.rubric_id as rubric
-	FROM handbook.company as hc
-	INNER JOIN handbook.rubricsofcompany as hroc ON hroc.company_id = hc.company_id
-	INNER JOIN handbook.building as hb ON hb.building_id=hc.building_id
+		hb.address AS address, 
+		hroc.rubric_id AS rubric
+	FROM handbook.company AS hc
+	INNER JOIN handbook.rubricsofcompany AS hroc ON hroc.company_id = hc.company_id
+	INNER JOIN handbook.building AS hb ON hb.building_id=hc.building_id
 	WHERE hroc.rubric_id= $1`
-	err := bs.db.Select(&comps, request, rubricId)
-	if err != nil {
+	if err := bs.db.Select(&comps, request, rubricId); err != nil {
 		return nil, err
 	}
 	request = `SELECT hc.name, hc.phones, 
-		hb.address as address, 
-		hroc.rubric_id as rubric
-	FROM handbook.company as hc
-	INNER JOIN handbook.rubricsofcompany as hroc ON hc.company_id = hroc.company_id
-	INNER JOIN handbook.building as hb ON hb.building_id=hc.building_id
-	inner join handbook.rubric as hr on hr.rubric_id = hroc.rubric_id 
+		hb.address AS address, 
+		hroc.rubric_id AS rubric
+	FROM handbook.company AS hc
+	INNER JOIN handbook.rubricsofcompany AS hroc ON hc.company_id = hroc.company_id
+	INNER JOIN handbook.building AS hb ON hb.building_id=hc.building_id
+	INNER JOIN handbook.rubric AS hr ON hr.rubric_id = hroc.rubric_id 
 	WHERE hr.parent_id= $1`
-	err = bs.db.Select(&comps, request, rubricId)
-	if err != nil {
+	if err := bs.db.Select(&comps, request, rubricId); err != nil {
 		return nil, err
 	}
+
+	requestID := `SELECT hr.rubric_id
+	FROM handbook.company AS hc
+	INNER JOIN handbook.rubricsofcompany AS hroc ON hc.company_id = hroc.company_id
+	INNER JOIN handbook.building AS hb ON hb.building_id=hc.building_id
+	INNER JOIN handbook.rubric AS hr ON hr.rubric_id = hroc.rubric_id 
+	GROUP BY hr.rubric_id
+	HAVING hr.parent_id = $1`
+	var rubricIDs []int64
+	if err := bs.db.Select(&rubricIDs, requestID, rubricId); err != nil {
+		return nil, err
+	}
+
+	compsLen := len(comps)
+	// Цикл необходим чтобы считать все рубрики каждой фирмы
+	for {
+		for _, rubric := range rubricIDs {
+			if err := bs.db.Select(&comps, request, rubric); err != nil {
+				return nil, err
+			}
+		}
+		if compsLen == len(comps) {
+			break
+		}
+
+		var nextRubricIDs []int64
+		for _, rubric := range rubricIDs {
+			if err := bs.db.Select(&nextRubricIDs, requestID, rubric); err != nil {
+				return nil, err
+			}
+		}
+		if len(nextRubricIDs) == 0 { 
+			break
+		}
+		rubricIDs = nextRubricIDs
+	}
+
 	sort.Sort(Companies(comps))
 	return comps, nil
 }

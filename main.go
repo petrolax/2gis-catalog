@@ -31,6 +31,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
+	defer db.Close()
 	handler := NewHandler(NewBuildingStorage(db))
 	router := chi.NewRouter()
 
