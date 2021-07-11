@@ -53,9 +53,9 @@ type Building struct {
 
 type Storage interface {
 	InsertBuilding(b *Building) error
-	GetCompany(company_id int64) ([]Company, error)
-	GetCompaniesFromBuilding(building_id int64) ([]Company, error)
-	GetCompaniesFromRubric(rubric_id int64) ([]Company, error)
+	GetCompany(companyId int64) ([]Company, error)
+	GetCompaniesFromBuilding(buildingId int64) ([]Company, error)
+	GetCompaniesFromRubric(rubricId int64) ([]Company, error)
 }
 
 type BuildingStorage struct {
@@ -72,7 +72,7 @@ func NewBuildingStorage(db *sqlx.DB) *BuildingStorage {
 func (bs *BuildingStorage) InsertBuilding(b *Building) error {
 	bs.Lock()
 	defer bs.Unlock()
-	
+
 	requestAddBuilding := `INSERT INTO handbook.building (address, coordinates) VALUES ($1, $2)`
 	requestAddCompany := `INSERT INTO handbook.company (name, phones, building_id) VALUES ($1, $2, $3)`
 	requestAddRubricOfCompany := `INSERT INTO handbook.rubricsofcompany (company_id, rubric_id) VALUES ($1, $2)`
